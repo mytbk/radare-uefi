@@ -17,6 +17,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import r2pipe
+from uefi_tables import rt_svc_name, boot_svc_name
 
 r2 = r2pipe.open()
 
@@ -54,4 +55,28 @@ print(g)
 for s in ["gST", "gBS", "gRT"]:
     if (g.get(s) is not None):
         r2.cmd("f {}@{}".format(s, g[s]))
+
+r2.cmd("aa")
+ops = r2.cmdj("pdfj")["ops"]
+gBS = g["gBS"]
+gRT = g["gRT"]
+regRT = ""
+regBS = ""
+for insn in ops:
+    es = insn["esil"].split(',')
+    if (insn["type"] == "mov"):
+        if (es[-1] == "=" and es[-3] == "[8]"):
+            if (insn["ptr"] == gBS):
+                regBS = es[-2]
+            if (insn["ptr"] == gRT):
+                regRT = es[-2]
+    if (insn["type"] == "ucall"):
+        if (es[1] == regBS):
+            fname = boot_svc_name(insn["ptr"])
+            if (fname is not None):
+                r2.cmd("CC \"gBS->{}\" @ {}".format(fname, insn["offset"]))
+        if (es[1] == regRT):
+            fname = rt_svc_name(insn["ptr"])
+            if (fname is not None):
+                r2.cmd("CC \"gRT->{}\" @ {}".format(fname, insn["offset"]))
 
