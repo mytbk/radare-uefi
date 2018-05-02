@@ -56,6 +56,8 @@ def find_functions(g, ops):
     regRT = ""
     regBS = ""
     for insn in ops:
+        if insn["type"] == "invalid": # there may be error
+            return
         es = insn["esil"].split(',')
         if (insn["type"] == "mov"):
             if (es[-1] == "=" and es[-3] == "[8]"):
@@ -72,6 +74,9 @@ def find_functions(g, ops):
                 fname = rt_svc_name(insn["ptr"])
                 if (fname is not None):
                     r2.cmd("CC \"gRT->{}\" @ {}".format(fname, insn["offset"]))
+#        if (insn["type"] == "call"):
+#            subf_ops = r2.cmdj("pdfj @ {}".format(insn["jump"]))["ops"]
+#            find_functions(g, subf_ops, depth+1)
 
 
 g = find_tables("$$")
@@ -83,3 +88,8 @@ for s in ["gST", "gBS", "gRT"]:
 r2.cmd("aa")
 ops = r2.cmdj("pdfj")["ops"]
 find_functions(g, ops)
+analyzed = [ ops[0]["offset"] ]
+all_fcns = list(filter(lambda x: "fcn." in x["name"], r2.cmdj("fj")))
+for f in all_fcns:
+    ops = r2.cmdj("pdfj @ {}".format(f["offset"]))["ops"]
+    find_functions(g, ops)
