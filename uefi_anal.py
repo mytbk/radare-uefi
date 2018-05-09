@@ -18,6 +18,7 @@
 
 import r2pipe
 from uefi_tables import rt_svc_name, boot_svc_name
+from flag_guids import flagAllGuids
 
 r2 = r2pipe.open()
 
@@ -93,3 +94,5 @@ all_fcns = list(filter(lambda x: "fcn." in x["name"], r2.cmdj("fj")))
 for f in all_fcns:
     ops = r2.cmdj("pdfj @ {}".format(f["offset"]))["ops"]
     find_functions(g, ops)
+
+flagAllGuids(r2)
