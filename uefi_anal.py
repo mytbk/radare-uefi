@@ -96,3 +96,4 @@ for f in all_fcns:
     find_functions(g, ops)
 
 flagAllGuids(r2)
+r2.cmd("f-hit*")
