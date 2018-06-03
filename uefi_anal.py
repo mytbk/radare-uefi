@@ -62,10 +62,23 @@ class EfiObj:
     def __init__(self, cb):
         self.action = cb
 
+def doLocateProtocol(r2):
+    if regMap.get("rcx") is not None and regMap.get("r8") is not None:
+        f = r2.cmdj("fdj {}".format(regMap["rcx"]))
+        if f.get("name") is not None:
+            guidname = f["name"]
+            staddr = regMap["r8"]
+            if len(guidname) > 16 and guidname[0:4] == "gEfi" and guidname[-12:] == "ProtocolGuid":
+                guidname = guidname[4:-12]
+                r2.cmd("f {} @ {}".format(guidname, staddr))
+
+
 def gBSact(r2, insn):
     fname = boot_svc_name(insn["ptr"])
     if fname is not None:
         r2.cmd("CC \"gBS->{}\" @ {}".format(fname, insn["offset"]))
+    if fname == "LocateProtocol":
+        doLocateProtocol(r2)
 
 def gRTact(r2, insn):
     fname = rt_svc_name(insn["ptr"])
@@ -88,6 +101,10 @@ def find_functions(g, ops):
             if (es[-1] == "=" and es[-3] == "[8]"):
                 regname = es[-2]
                 regMap[regname] = insn["ptr"]
+        if (insn["type"] == "lea"):
+            if es[-4] in ["rip", "rsp"]:
+                regname = es[-2]
+                regMap[regname] = insn["ptr"]
         if (insn["type"] == "ucall"):
             addr = regMap.get(es[1])
             if addr is not None:
@@ -95,6 +112,10 @@ def find_functions(g, ops):
                 if obj is not None:
                     obj.action(r2, insn)
 
+
+# flag GUIDs first
+flagAllGuids(r2)
+r2.cmd("f-hit*")
 
 g = find_tables("$$")
 print(g)
@@ -114,6 +135,3 @@ all_fcns = list(filter(lambda x: "fcn." in x["name"], r2.cmdj("fj")))
 for f in all_fcns:
     ops = r2.cmdj("pdfj @ {}".format(f["offset"]))["ops"]
     find_functions(g, ops)
-
-flagAllGuids(r2)
-r2.cmd("f-hit*")
