@@ -51,6 +51,30 @@ def find_tables(addr):
 
     return res
 
+
+# register and address mappings
+# regMap: reg->addr
+regMap = {}
+# efiAddrMap: addr->efiobj
+efiAddrMap = {}
+
+class EfiObj:
+    def __init__(self, cb):
+        self.action = cb
+
+def gBSact(r2, insn):
+    fname = boot_svc_name(insn["ptr"])
+    if fname is not None:
+        r2.cmd("CC \"gBS->{}\" @ {}".format(fname, insn["offset"]))
+
+def gRTact(r2, insn):
+    fname = rt_svc_name(insn["ptr"])
+    if (fname is not None):
+        r2.cmd("CC \"gRT->{}\" @ {}".format(fname, insn["offset"]))
+
+gbsobj = EfiObj(gBSact)
+grtobj = EfiObj(gRTact)
+
 def find_functions(g, ops):
     gBS = g["gBS"]
     gRT = g["gRT"]
@@ -62,26 +86,14 @@ def find_functions(g, ops):
         es = insn["esil"].split(',')
         if (insn["type"] == "mov"):
             if (es[-1] == "=" and es[-3] == "[8]"):
-                if insn["ptr"] != gBS and es[-2] == regBS:
-                    regBS = ""
-                if insn["ptr"] != gRT and es[-2] == regRT:
-                    regRT = ""
-                if (insn["ptr"] == gBS):
-                    regBS = es[-2]
-                if (insn["ptr"] == gRT):
-                    regRT = es[-2]
+                regname = es[-2]
+                regMap[regname] = insn["ptr"]
         if (insn["type"] == "ucall"):
-            if (es[1] == regBS):
-                fname = boot_svc_name(insn["ptr"])
-                if (fname is not None):
-                    r2.cmd("CC \"gBS->{}\" @ {}".format(fname, insn["offset"]))
-            if (es[1] == regRT):
-                fname = rt_svc_name(insn["ptr"])
-                if (fname is not None):
-                    r2.cmd("CC \"gRT->{}\" @ {}".format(fname, insn["offset"]))
-#        if (insn["type"] == "call"):
-#            subf_ops = r2.cmdj("pdfj @ {}".format(insn["jump"]))["ops"]
-#            find_functions(g, subf_ops, depth+1)
+            addr = regMap.get(es[1])
+            if addr is not None:
+                obj = efiAddrMap.get(addr)
+                if obj is not None:
+                    obj.action(r2, insn)
 
 
 g = find_tables("$$")
@@ -89,6 +101,10 @@ print(g)
 for s in ["gST", "gBS", "gRT"]:
     if (g.get(s) is not None):
         r2.cmd("f {}@{}".format(s, g[s]))
+        if s == "gBS":
+            efiAddrMap[g[s]] = gbsobj
+        if s == "gRT":
+            efiAddrMap[g[s]] = grtobj
 
 r2.cmd("aa")
 ops = r2.cmdj("pdfj")["ops"]
