@@ -62,6 +62,10 @@ def find_functions(g, ops):
         es = insn["esil"].split(',')
         if (insn["type"] == "mov"):
             if (es[-1] == "=" and es[-3] == "[8]"):
+                if insn["ptr"] != gBS and es[-2] == regBS:
+                    regBS = ""
+                if insn["ptr"] != gRT and es[-2] == regRT:
+                    regRT = ""
                 if (insn["ptr"] == gBS):
                     regBS = es[-2]
                 if (insn["ptr"] == gRT):
