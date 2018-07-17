@@ -71,7 +71,7 @@ def find_functions(g, ops):
                 regname = es[-2]
                 regMap[regname] = insn["ptr"]
         if (insn["type"] == "ucall"):
-            if insn["ptr"] != 0:
+            if insn.get("ptr") != 0:
                 addr = regMap.get(es[1])
             else:
                 addr = regMap.get(es[0])
