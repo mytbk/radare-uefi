@@ -30,7 +30,7 @@ def find_tables(addr):
     cmdline = "pdj @ {}".format(addr)
     ops = r2.cmdj(cmdline)
     for insn in ops:
-        if (res.get("gST") is None and insn["type"] == "call"):
+        if (len(res) == 0 and insn["type"] == "call"):
             return find_tables(insn["jump"])
 
         if (insn["type"] == "mov"):
@@ -95,6 +95,8 @@ for s in ["gST", "gBS", "gRT"]:
             efiAddrMap[g[s]] = gbsobj
         if s == "gRT":
             efiAddrMap[g[s]] = grtobj
+    else:
+        g[s] = None
 
 r2.cmd("aa")
 ops = r2.cmdj("pdfj")["ops"]
