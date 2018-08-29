@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 # register and address mappings
-# regMap: reg->addr
+# regMap: reg->{value, defined insn}
 regMap = {}
 # efiAddrMap: addr->efiobj
 efiAddrMap = {}

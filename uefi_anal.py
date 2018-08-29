@@ -66,19 +66,21 @@ def find_functions(g, ops):
         if insn["type"] == "invalid": # there may be error
             return
         es = insn["esil"].split(',')
-        if (insn["type"] == "mov"):
+        if insn["type"] == "mov":
             if (es[-1] == "=" and es[-3] == "[8]"):
                 regname = es[-2]
-                regMap[regname] = insn["ptr"]
+                regMap[regname] = {"value": insn["ptr"], "insn": insn}
+            elif len(es) == 3 and regMap.get(es[0]).get("value") is not None: # mov rd, rs
+                regMap[es[1]] = {"value": regMap[es[0]]["value"], "insn": insn}
         if (insn["type"] == "lea"):
             if es[-4] in ["rip", "rsp"]:
                 regname = es[-2]
-                regMap[regname] = insn["ptr"]
+                regMap[regname] = {"value": insn["ptr"], "insn": insn}
         if (insn["type"] == "ucall"):
             if insn.get("ptr") != 0:
-                addr = regMap.get(es[1])
+                addr = regMap.get(es[1]).get("value")
             else:
-                addr = regMap.get(es[0])
+                addr = regMap.get(es[0]).get("value")
 
             if addr is not None:
                 obj = efiAddrMap.get(addr)
