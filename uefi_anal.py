@@ -36,7 +36,11 @@ def find_tables(addr):
         if (insn["type"] == "mov"):
             es = insn["esil"].split(',')
             if (es[0] == "rdx" and es[-1] == "=[8]"):
-                res["gST"] = insn["ptr"]
+                try:
+                    res["gST"] = insn["ptr"]
+                except KeyError:
+                    print(insn)
+                    return
 
             if ('qword [rdx + 0x60]' in insn['disasm']):
                 rBS = es[4]
