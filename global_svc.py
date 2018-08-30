@@ -6,7 +6,7 @@ from uefi_tables import rt_svc_name, boot_svc_name
 from smmbase import smmbaseobj
 
 def doLocateProtocol(r2):
-    if regMap.get("rcx").get("value") is not None and regMap.get("r8").get("value") is not None:
+    if regMap.get("rcx") is not None and regMap.get("r8") is not None:
         f = r2.cmdj("fdj {}".format(regMap["rcx"]["value"]))
         if f.get("name") is not None:
             guidname = f["name"]
@@ -18,7 +18,7 @@ def doLocateProtocol(r2):
                     efiAddrMap[staddr] = smmbaseobj
 
 def doInstallProtocolInterface(r2):
-    if regMap.get("r9").get("value") is not None:
+    if regMap.get("r9") is not None:
         r2.cmd("\"CC protocol interface\" @ {}".format(regMap.get("r9")["insn"]["offset"]))
 
 def gBSact(r2, insn):

@@ -70,7 +70,7 @@ def find_functions(g, ops):
             if (es[-1] == "=" and es[-3] == "[8]"):
                 regname = es[-2]
                 regMap[regname] = {"value": insn["ptr"], "insn": insn}
-            elif len(es) == 3 and regMap.get(es[0]).get("value") is not None: # mov rd, rs
+            elif len(es) == 3 and regMap.get(es[0]) is not None: # mov rd, rs
                 regMap[es[1]] = {"value": regMap[es[0]]["value"], "insn": insn}
         if (insn["type"] == "lea"):
             if es[-4] in ["rip", "rsp"]:
